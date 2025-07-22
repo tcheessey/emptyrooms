@@ -3,9 +3,7 @@ import { RoomContext } from "../../utils/RoomProvider";
 import RoomTile from "./RoomTile";
 
 export default function RoomGrid() {
-  // const [myCoordinates, setMyCoordinates] = useState({ x: 0, y: 0 });
-  const { roomData, usersInRoom, myCoordinates, updateUsers, move } =
-    useContext(RoomContext);
+  const { roomData, move } = useContext(RoomContext);
 
   const handleKeyPress = (e) => {
     switch (e.keyCode) {
@@ -53,7 +51,6 @@ export default function RoomGrid() {
           {row}
         </div>
       ))}
-      {usersInRoom.length}
     </div>
   );
 }

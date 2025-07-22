@@ -1,7 +1,7 @@
 import axios from "axios";
 import io from "socket.io-client";
 import React, { createContext, useContext, useState } from "react";
-import { AuthContext } from "../../LoginRegister/AuthProvider.js";
+import { AuthContext } from "./AuthProvider.js";
 
 export const RoomContext = createContext({
   roomData: null,
@@ -39,23 +39,28 @@ export const RoomProvider = ({ children }) => {
   };
 
   const updateUsers = (data) => {
-    // data: { user: userData, coordinates: myCoordinates }
+    // data: { userData:..., coordinates: myCoordinates }
     let targetUser;
     if (usersInRoom.length > 0) {
-      targetUser = usersInRoom.find((u) => u.id === data.user.id);
+      targetUser = usersInRoom.find((u) => u.userData.id === data.userData.id);
     }
     if (targetUser) {
-      setUsersInRoom([
+      setUsersInRoom(
         usersInRoom.map((u) => {
-          if (u.id === data.user.id) {
+          if (u.userData.id === data.userData.id) {
             return { ...u, coordinates: data.coordinates };
           }
           return u;
-        }),
-      ]);
+        })
+      );
     } else {
       setUsersInRoom([...usersInRoom, data]);
     }
+  };
+
+  const removeUserFromRoom = (id) => {
+    console.log("remove", id);
+    setUsersInRoom(usersInRoom.filter((u) => u.userData.id != id));
   };
 
   const move = (dir, change) => {
@@ -69,7 +74,7 @@ export const RoomProvider = ({ children }) => {
       }));
       socket.emit("shareUpdate", {
         room: roomData,
-        data: { user: userData, coordinates: myCoordinates },
+        user: { userData, coordinates: myCoordinates },
       });
     }
   };
@@ -81,6 +86,7 @@ export const RoomProvider = ({ children }) => {
         myCoordinates,
         goToRoom,
         updateUsers,
+        removeUserFromRoom,
         move,
         socket,
         setSocket,

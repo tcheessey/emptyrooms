@@ -1,12 +1,11 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import React, { useContext } from "react";
-import { AuthContext } from "./LoginRegister/AuthProvider.js";
-import Home from "./Home/Home.js";
-import Welcome from "./LoginRegister/Welcome.js";
-import Me from "./Profile/Me.js";
+import Home from "./Home";
+import Welcome from "./Welcome";
+import Me from "./Me";
 
 export default function Pages() {
-  const { isLoggedIn } = useContext(AuthContext);
+  // const { isLoggedIn } = useContext(AuthContext);
+  const isLoggedIn = false;
   return (
     <Routes>
       <Route

@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { AuthContext } from "./AuthProvider.js";
+import { AuthContext } from "../utils/AuthProvider";
 import axios from "axios";
 
 export default function Welcome() {
@@ -16,7 +16,7 @@ export default function Welcome() {
     seterror("");
   }, [registerPage]);
 
-  const checkUsername = (un) => {
+  const checkUsername = (un: string) => {
     if (registerPage) {
       axios.get("/usernameAvailable/" + un).then((response) => {
         if (!response.data.success) {
@@ -28,14 +28,14 @@ export default function Welcome() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     e.preventDefault();
     if (registerPage) {
-      register({ username, password }, (errorMessage) => {
+      register({ username, password }, (errorMessage: string) => {
         seterror(errorMessage);
       });
     } else {
-      login({ username, password }, (errorMessage) => {
+      login({ username, password }, (errorMessage: string) => {
         seterror(errorMessage);
       });
     }
@@ -71,7 +71,7 @@ export default function Welcome() {
           onBlur={(e) => checkUsername(e.target.value)}
         />
         <input
-          username={password}
+          value={password}
           name='password'
           type='password'
           placeholder='Password'

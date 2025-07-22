@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import Controls from "./components/Controls";
-import Room from "./components/Room";
+import Controls from "./components/Controls.js";
+import Room from "./components/Room.js";
 import { RoomProvider } from "./utils/RoomProvider.js";
 
 export default function Home() {

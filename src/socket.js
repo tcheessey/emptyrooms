@@ -1,18 +1,12 @@
 export default (io) => {
   io.on("connection", (socket) => {
     socket.on("disconnecting", () => {
-      // let rooms = Object.keys(socket.rooms);
-
-      // console.log(rooms);
-
-      // rooms.forEach((room) => {
-      //   socket.to(room).emit("userLeft", { id: socket.id });
-      // });
-      // console.log("user left with id", socket.id);
-      socket.broadcast.emit("userLeft", { id: socket.id });
+      console.log(socket.userId);
+      socket.broadcast.emit("userLeft", { id: socket.userId });
     });
 
     socket.on("joinedRoom", ({ user, room }) => {
+      socket.userId = user.userData.id;
       socket.join(room.name);
       console.log(` ${socket.id} just logged in`);
       socket.to(room.name).emit("shareData", { id: socket.id, user: user });
@@ -24,7 +18,7 @@ export default (io) => {
       io.to(data.room).emit("newMessage", data);
     });
     socket.volatile.on("shareUpdate", (data) => {
-      socket.to(data.room).emit("receiveUpdate", data.data);
+      socket.to(data.room.name).emit("receiveUpdate", data.user);
     });
   });
 };

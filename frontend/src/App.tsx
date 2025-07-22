@@ -1,9 +1,9 @@
 import { BrowserRouter } from "react-router-dom";
 import React from "react";
-import { AuthProvider } from "./LoginRegister/AuthProvider.js";
-import Pages from "./Pages.js";
+import { AuthProvider } from "./utils/AuthProvider.js";
+import Pages from "./routes/Pages.js";
 
-export default function App() {
+const App = () => {
   // units
   const setUnits = () => {
     let vh = window.innerHeight * 0.01;
@@ -22,5 +22,7 @@ export default function App() {
         <Pages />
       </AuthProvider>
     </BrowserRouter>
-  );
-}
+  )
+};
+
+export default App;
