@@ -1,10 +1,25 @@
 .room {
     width: 100%;
     @include fullheight;
-    padding: var(--tiun, 50px);
+    padding: clamp(16px, 5vw, 48px);
     background-image: url(../assets/img/ded.png);
     background-size: var(--tiun, 50px) var(--tiun, 50px);
     background-repeat: repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+
+    &__viewport {
+        max-width: 100%;
+        overflow: auto;
+    }
+
+    &__canvas {
+        display: block;
+        image-rendering: pixelated;
+    }
+
     &__grid {
         &__row {
             display: flex;

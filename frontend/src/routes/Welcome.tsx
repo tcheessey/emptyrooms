@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, type FormEvent } from "react";
 import { AuthContext } from "../utils/AuthProvider";
 import axios from "axios";
 
@@ -18,7 +18,7 @@ export default function Welcome() {
 
   const checkUsername = (un: string) => {
     if (registerPage) {
-      axios.get("/usernameAvailable/" + un).then((response) => {
+      axios.get("/api/usernameAvailable/" + un).then((response) => {
         if (!response.data.success) {
           seterror("username already taken");
         } else {
@@ -28,8 +28,8 @@ export default function Welcome() {
     }
   };
 
-  const handleSubmit = (e: any) => {
-    e.preventDefault();
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (registerPage) {
       register({ username, password }, (errorMessage: string) => {
         seterror(errorMessage);
