@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "index.js",
   "dependencies": {
     "axios": "^1.4.0",
     "cookie-parser": "^1.4.6",
@@ -12,31 +11,30 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
     "knex": "^2.4.2",
-    "mysql": "^2.18.1",
+    "mysql2": "^3.22.4",
     "socket.io": "^4.6.2"
   },
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js"
+    "start": "tsx watch index.ts",
+    "build": "tsc -p tsconfig.json",
+    "migrate": "knex migrate:latest",
+    "test": "vitest"
   },
-  "proxy": "http://localhost:3000",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/t-chess/emptyrooms.git"
   },
-  "author": "Tatiana Chess",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/t-chess/emptyrooms/issues"
-  },
-  "homepage": "https://github.com/t-chess/emptyrooms#readme",
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.9",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.4",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.10.1",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "nodemon": "^2.0.22",
-    "typescript": "^5.2.2"
-  },
-  "engines": {
-    "node": "18.0.0"
+    "tsx": "^4.20.6",
+    "typescript": "^5.2.2",
+    "vitest": "^4.1.7"
   }
 }

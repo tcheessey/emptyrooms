@@ -1,98 +1,152 @@
 import axios from "axios";
-import io from "socket.io-client";
-import React, { createContext, useContext, useState } from "react";
-import { AuthContext } from "./AuthProvider.js";
+import { io, type Socket } from "socket.io-client";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { AuthContext, type AuthUser } from "./AuthProvider";
 
-export const RoomContext = createContext({
+export type Coordinates = {
+  x: number;
+  y: number;
+};
+
+export type RoomData = {
+  id: number;
+  name: string;
+  capacity: number;
+  width: number;
+  height: number;
+};
+
+export type RoomUser = {
+  userData: AuthUser;
+  coordinates: Coordinates;
+};
+
+type Direction = "x" | "y";
+
+type RoomContextValue = {
+  roomData: RoomData | null;
+  usersInRoom: RoomUser[];
+  myCoordinates: Coordinates;
+  goToRoom: (roomId: number | null, callback: (data: { room: RoomData; user: RoomUser }) => void) => void;
+  updateUsers: (data: RoomUser) => void;
+  removeUserFromRoom: (id: number) => void;
+  move: (dir: Direction, change: number) => void;
+  socket: Socket;
+};
+
+export const RoomContext = createContext<RoomContextValue>({
   roomData: null,
   usersInRoom: [],
   myCoordinates: { x: 0, y: 0 },
-  socket: io.connect("http://localhost:3000"),
+  goToRoom: () => undefined,
+  updateUsers: () => undefined,
+  removeUserFromRoom: () => undefined,
+  move: () => undefined,
+  socket: io({ autoConnect: false }),
 });
 
-export const RoomProvider = ({ children }) => {
+export const RoomProvider = ({ children }: { children: ReactNode }) => {
   const { userData } = useContext(AuthContext);
   const [activeRoom, setActiveRoom] = useState(1);
-  const [roomData, setRoomData] = useState(null);
-  const [usersInRoom, setUsersInRoom] = useState([]);
-  const [myCoordinates, setMyCoordinates] = useState({ x: 0, y: 0 });
-  const [socket, setSocket] = useState(io.connect("http://localhost:3000"));
+  const [roomData, setRoomData] = useState<RoomData | null>(null);
+  const [usersInRoom, setUsersInRoom] = useState<RoomUser[]>([]);
+  const [myCoordinates, setMyCoordinates] = useState<Coordinates>({ x: 0, y: 0 });
+  const socket = useMemo(() => io({ autoConnect: false, withCredentials: true }), []);
 
-  const goToRoom = (roomId, callback) => {
-    if (roomId) {
-      setActiveRoom(roomId);
-    }
-    axios.get("/getRoom/" + activeRoom).then((response) => {
+  const goToRoom = useCallback((
+    roomId: number | null,
+    callback: (data: { room: RoomData; user: RoomUser }) => void
+  ) => {
+    const targetRoomId = roomId ?? activeRoom;
+    setActiveRoom(targetRoomId);
+
+    axios.get("/api/getRoom/" + targetRoomId).then((response) => {
       if (response.data.success) {
-        setRoomData((data) => ({
-          ...data,
-          ...response.data.room,
-        }));
+        const room = response.data.room as RoomData;
+        setRoomData(room);
+
+        if (!userData) {
+          return;
+        }
+
         callback({
-          room: response.data.room,
+          room,
           user: { userData, coordinates: myCoordinates },
         });
       } else {
         console.log(response.data.message);
       }
     });
-  };
+  }, [activeRoom, myCoordinates, userData]);
 
-  const updateUsers = (data) => {
-    // data: { userData:..., coordinates: myCoordinates }
-    let targetUser;
-    if (usersInRoom.length > 0) {
-      targetUser = usersInRoom.find((u) => u.userData.id === data.userData.id);
-    }
-    if (targetUser) {
-      setUsersInRoom(
-        usersInRoom.map((u) => {
-          if (u.userData.id === data.userData.id) {
-            return { ...u, coordinates: data.coordinates };
-          }
-          return u;
-        })
+  const updateUsers = useCallback((data: RoomUser) => {
+    setUsersInRoom((currentUsers) => {
+      const targetUser = currentUsers.find((u) => u.userData.id === data.userData.id);
+      if (!targetUser) {
+        return [...currentUsers, data];
+      }
+
+      return currentUsers.map((u) =>
+        u.userData.id === data.userData.id ? { ...u, coordinates: data.coordinates } : u
       );
-    } else {
-      setUsersInRoom([...usersInRoom, data]);
+    });
+  }, []);
+
+  const removeUserFromRoom = useCallback((id: number) => {
+    setUsersInRoom((currentUsers) => currentUsers.filter((u) => u.userData.id !== id));
+  }, []);
+
+  const move = useCallback((dir: Direction, change: number) => {
+    if (!roomData || !userData) {
+      return;
     }
-  };
 
-  const removeUserFromRoom = (id) => {
-    console.log("remove", id);
-    setUsersInRoom(usersInRoom.filter((u) => u.userData.id != id));
-  };
+    const maxNum = dir === "x" ? roomData.width : roomData.height;
+    const nextCoordinates = {
+      ...myCoordinates,
+      [dir]: myCoordinates[dir] + change,
+    };
 
-  const move = (dir, change) => {
-    let coords = myCoordinates;
-    let maxNum = dir === "x" ? roomData.width : roomData.height;
-    if (coords[dir] + change > -1 && coords[dir] + change < maxNum) {
-      coords[dir] += change;
-      setMyCoordinates((myCoordinates) => ({
-        ...myCoordinates,
-        ...coords,
-      }));
+    if (nextCoordinates[dir] > -1 && nextCoordinates[dir] < maxNum) {
+      setMyCoordinates(nextCoordinates);
       socket.emit("shareUpdate", {
         room: roomData,
-        user: { userData, coordinates: myCoordinates },
+        user: { userData, coordinates: nextCoordinates },
       });
     }
-  };
+  }, [myCoordinates, roomData, socket, userData]);
+
+  const value = useMemo(
+    () => ({
+      roomData,
+      usersInRoom,
+      myCoordinates,
+      goToRoom,
+      updateUsers,
+      removeUserFromRoom,
+      move,
+      socket,
+    }),
+    [
+      goToRoom,
+      move,
+      myCoordinates,
+      removeUserFromRoom,
+      roomData,
+      socket,
+      updateUsers,
+      usersInRoom,
+    ]
+  );
+
   return (
-    <RoomContext.Provider
-      value={{
-        roomData,
-        usersInRoom,
-        myCoordinates,
-        goToRoom,
-        updateUsers,
-        removeUserFromRoom,
-        move,
-        socket,
-        setSocket,
-      }}
-    >
-      {children}
-    </RoomContext.Provider>
+    <RoomContext.Provider value={value}>{children}</RoomContext.Provider>
   );
 };

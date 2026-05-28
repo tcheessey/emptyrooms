@@ -1,57 +1,105 @@
 import axios from "axios";
-import React, { createContext, useState, useEffect } from "react";
+import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
-export const AuthContext = createContext({ isLoggedIn: false });
+export type AuthUser = {
+  id: number;
+  username: string;
+  isAdmin: boolean;
+};
 
-export const AuthProvider = ({ children }) => {
+type Credentials = {
+  username: string;
+  password: string;
+};
+
+type AuthContextValue = {
+  isCheckingAuth: boolean;
+  isLoggedIn: boolean;
+  userData: AuthUser | null;
+  login: (credentials: Credentials, onError?: (message: string) => void) => void;
+  register: (credentials: Credentials, onError?: (message: string) => void) => void;
+  logout: () => void;
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (axios.isAxiosError<{ message?: string }>(error)) {
+    return error.response?.data?.message ?? "Something went wrong";
+  }
+
+  return "Something went wrong";
+};
+
+export const AuthContext = createContext<AuthContextValue>({
+  isCheckingAuth: true,
+  isLoggedIn: false,
+  userData: null,
+  login: () => undefined,
+  register: () => undefined,
+  logout: () => undefined,
+});
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState<AuthUser | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("/checkAuth").then((response) => {
-      if (response.data.success) {
-        setIsLoggedIn(true);
-        setUserData(response.data.user);
-      } else {
+    axios
+      .get("/api/checkAuth")
+      .then((response) => {
+        if (response.data.success) {
+          setIsLoggedIn(true);
+          setUserData(response.data.user);
+        } else {
+          setIsLoggedIn(false);
+          setUserData(null);
+        }
+      })
+      .catch(() => {
         setIsLoggedIn(false);
-      }
-    });
-  }, [navigate]);
+        setUserData(null);
+      })
+      .finally(() => setIsCheckingAuth(false));
+  }, []);
 
-  const login = ({ username, password }, callback) => {
-    axios.post("/login", { username, password }).then((response) => {
-      if (response.data.success) {
+  const login = useCallback(({ username, password }: Credentials, onError?: (message: string) => void) => {
+    axios
+      .post("/api/login", { username, password })
+      .then((response) => {
         setIsLoggedIn(true);
         setUserData(response.data.user);
         navigate("/");
-      } else {
-        callback(response.data.message);
-      }
-    });
-  };
-  const register = ({ username, password }, callback) => {
-    axios.post("/register", { username, password }).then((response) => {
-      if (response.data.success) {
-        login({ username, password });
-      } else {
-        callback(response.data.message);
-      }
-    });
-  };
+      })
+      .catch((error) => onError?.(getErrorMessage(error)));
+  }, [navigate]);
 
-  const logout = () => {
-    axios.post("/logout").then((response) => {
-      window.location.reload();
+  const register = useCallback(({ username, password }: Credentials, onError?: (message: string) => void) => {
+    axios
+      .post("/api/register", { username, password })
+      .then((response) => {
+        setIsLoggedIn(true);
+        setUserData(response.data.user);
+        navigate("/");
+      })
+      .catch((error) => onError?.(getErrorMessage(error)));
+  }, [navigate]);
+
+  const logout = useCallback(() => {
+    axios.post("/api/logout").finally(() => {
+      setIsLoggedIn(false);
+      setUserData(null);
+      navigate("/welcome");
     });
-  };
+  }, [navigate]);
+
+  const value = useMemo(
+    () => ({ isCheckingAuth, isLoggedIn, userData, login, register, logout }),
+    [isCheckingAuth, isLoggedIn, login, logout, register, userData]
+  );
 
   return (
-    <AuthContext.Provider
-      value={{ isLoggedIn, userData, login, register, logout }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
 };

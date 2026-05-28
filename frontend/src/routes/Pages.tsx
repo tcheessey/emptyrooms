@@ -1,11 +1,18 @@
+import { useContext } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import Spinner from "../components/Spinner";
+import { AuthContext } from "../utils/AuthProvider";
 import Home from "./Home";
 import Welcome from "./Welcome";
 import Me from "./Me";
 
 export default function Pages() {
-  // const { isLoggedIn } = useContext(AuthContext);
-  const isLoggedIn = false;
+  const { isCheckingAuth, isLoggedIn } = useContext(AuthContext);
+
+  if (isCheckingAuth) {
+    return <Spinner />;
+  }
+
   return (
     <Routes>
       <Route

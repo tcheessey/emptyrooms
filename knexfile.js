@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 export default {
   development: {
-    client: "mysql",
+    client: "mysql2",
     connection: {
       port: process.env.DB_PORT,
       host: process.env.DB_HOST,
@@ -12,7 +12,7 @@ export default {
     },
   },
   production: {
-    client: "mysql",
+    client: "mysql2",
     connection: process.env.JAWSDB_URL,
   },
 };

@@ -46,6 +46,28 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
+
+.room {
+  width: 100%;
+  min-height: 100vh;
+  min-height: calc(var(--vh, 1vh) * 100);
+  padding: clamp(16px, 5vw, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  background: #211e2a;
+}
+
+.room__viewport {
+  max-width: 100%;
+  overflow: auto;
+}
+
+.room__canvas {
+  display: block;
+  image-rendering: pixelated;
+}
 button:hover {
   border-color: #646cff;
 }

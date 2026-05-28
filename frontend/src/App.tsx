@@ -1,20 +1,21 @@
+import { useEffect } from "react";
 import { BrowserRouter } from "react-router-dom";
-import React from "react";
-import { AuthProvider } from "./utils/AuthProvider.js";
-import Pages from "./routes/Pages.js";
+import { AuthProvider } from "./utils/AuthProvider";
+import Pages from "./routes/Pages";
 
 const App = () => {
-  // units
-  const setUnits = () => {
-    let vh = window.innerHeight * 0.01;
-    let tileSize = window.innerWidth / 20;
-    // todo min a max value of tileSize for big screens and mobiles
-    document.documentElement.style.setProperty("--vh", `${vh}px`);
-    document.documentElement.style.setProperty("--tiun", `${tileSize}px`);
-  };
-  setUnits();
-  window.addEventListener("resize", setUnits);
-  //
+  useEffect(() => {
+    const setUnits = () => {
+      const vh = window.innerHeight * 0.01;
+      const tileSize = Math.max(24, Math.min(50, window.innerWidth / 20));
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+      document.documentElement.style.setProperty("--tiun", `${tileSize}px`);
+    };
+
+    setUnits();
+    window.addEventListener("resize", setUnits);
+    return () => window.removeEventListener("resize", setUnits);
+  }, []);
 
   return (
     <BrowserRouter>
@@ -22,7 +23,7 @@ const App = () => {
         <Pages />
       </AuthProvider>
     </BrowserRouter>
-  )
+  );
 };
 
 export default App;
